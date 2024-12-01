@@ -1,0 +1,69 @@
+import pandas as pd
+
+# Load the data
+url = "https://raw.githubusercontent.com/arora123/Data/master/emp-data.csv"
+df = pd.read_csv(url)
+
+# Inspect the first few rows of the dataset to understand its structure
+print(df.head())
+
+# Clean data: Check for any missing values
+print(df.isnull().sum())
+
+# Clean the 'Salary' column by removing any non-numeric characters (e.g., currency symbols, commas)
+df['Salary'] = df['Salary'].replace({'\$': '', ',': ''}, regex=True)
+
+# Convert 'Salary' column to numeric values (force errors to NaN if invalid)
+df['Salary'] = pd.to_numeric(df['Salary'], errors='coerce')
+
+# Check if the 'Salary' column was successfully converted
+print(df['Salary'].head())
+
+# Fill missing values in 'Salary' with the mean of the column
+df['Salary'].fillna(df['Salary'].mean(), inplace=True)
+
+# 1. How many males are there in the entire organization?
+male_count = df[df['Gender'] == 'Male'].shape[0]
+print(f"Number of Males: {male_count}")
+
+# 2. How many females are there in the entire organization?
+female_count = df[df['Gender'] == 'Female'].shape[0]
+print(f"Number of Females: {female_count}")
+
+# 3. How many males/females are there in the entire organization?
+gender_count = df['Gender'].value_counts()
+print(f"Gender distribution in the organization:\n{gender_count}")
+
+# 4. How many males/females are there in each department?
+department_gender_count = pd.crosstab(df['Gender'], df['Department'])
+print(f"Males/Females in each department:\n{department_gender_count}")
+
+# 5. How many males/females are there in each location?
+location_gender_count = pd.crosstab(df['Gender'], df['Loc'])
+print(f"Males/Females in each location:\n{location_gender_count}")
+
+# 6. For which department is the average pay highest?
+avg_salary_by_dept = df.groupby('Department')['Salary'].mean().round(0).sort_values(ascending=False)
+print(f"Department with highest average pay:\n{avg_salary_by_dept}")
+
+# 7. For which location is the average pay highest?
+avg_salary_by_loc = df.groupby('Loc')['Salary'].mean().round(0).sort_values(ascending=False)
+print(f"Location with highest average pay:\n{avg_salary_by_loc}")
+
+# 8. Percentage of employees with each rating
+ratings_count = df['Rating'].value_counts()
+total_employees = len(df)
+ratings_percentage = (ratings_count / total_employees) * 100
+print(f"Percentage of employees with each rating:\n{ratings_percentage}")
+
+# 9. Compute gender pay gap for each department
+mean_salary_by_gender_dept = df.groupby(['Gender', 'Department'])['Salary'].mean()
+gender_pay_gap_dept = mean_salary_by_gender_dept.unstack(level='Gender')
+gender_pay_gap_dept['Gender Pay Gap (%)'] = ((gender_pay_gap_dept['Female'] - gender_pay_gap_dept['Male']) / gender_pay_gap_dept['Male']) * 100
+print(f"Gender Pay Gap by Department:\n{gender_pay_gap_dept}")
+
+# 10. Compute gender pay gap for each location
+mean_salary_by_gender_loc = df.groupby(['Gender', 'Loc'])['Salary'].mean()
+gender_pay_gap_loc = mean_salary_by_gender_loc.unstack(level='Gender')
+gender_pay_gap_loc['Gender Pay Gap (%)'] = ((gender_pay_gap_loc['Female'] - gender_pay_gap_loc['Male']) / gender_pay_gap_loc['Male']) * 100
+print(f"Gender Pay Gap by Location:\n{gender_pay_gap_loc}")
